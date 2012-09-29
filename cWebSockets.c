@@ -78,7 +78,6 @@ void WEBSOCKET_generate_handshake( const char *data, char *dst, const unsigned i
 	memset( sha1_tmp, '\0', 16 );
 	memset( sec_websocket_accept, '\0', 256 );
 
-	printf("VER: %d\n", WEBSOCKET_client_version( data ) );
 	REQUEST_get_header_value( data, "Origin:", origin, 256 );
 	REQUEST_get_header_value( data, "Host:", host, 256 );
 
