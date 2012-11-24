@@ -1,4 +1,4 @@
-cWebSockets
+c-websocket
 ===========
 Copyright (C) 2012
 Marcin Kelar (marcin.kelar@gmail.com)
