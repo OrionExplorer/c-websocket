@@ -22,14 +22,18 @@ void REQUEST_get_header_value( const char *data, const char *requested_key )
 @dst - pointer to char array where the result will be stored,
 @dst_len - size of @dst */
 void REQUEST_get_header_value( const char *data, const char *requested_key, char *dst, unsigned int dst_len ) {
+	char *src = ( char * )malloc( 65535 * sizeof( char ) );
 	char *result_handler;
 	char *result;
 	char *tmp_header_key;
 	int i = 0;
 
-	tmp_header_key = strstr( ( char* )data, requested_key );
+	strncpy( src, data, 65535 );
+
+	tmp_header_key = strstr( ( char* )src, requested_key );
 	if( tmp_header_key == NULL ) {
 		dst = NULL;
+		return;
 	}
 
 	result_handler = ( char * )malloc( 1024 * sizeof( char ) );
@@ -49,7 +53,8 @@ void REQUEST_get_header_value( const char *data, const char *requested_key, char
 	result_handler = NULL;
 
 	strncpy( dst, strstr( result, ": " ) + 2, dst_len );
-
+	free( src );
+	src = NULL;
 	free( result );
 	result = NULL;
 
@@ -61,25 +66,25 @@ void WEBSOCKET_generate_handshake( const char *data, char *dst, unsigned int dst
 @dst - pointer to char array where the result will be stored
 @dst_len - size of @dst */
 void WEBSOCKET_generate_handshake( const char *data, char *dst, const unsigned int dst_len ) {
-	char origin[ 256 ];
-	char host[ 256 ];
+	char origin[ 512 ];
+	char host[ 512 ];
 	char additional_headers[ 2048 ];
-	char sec_websocket_key[ 256 ];
-	char sec_websocket_key_sha1[ 256 ];
-	char sha1_part[ 256 ];
+	char sec_websocket_key[ 512 ];
+	char sec_websocket_key_sha1[ 512 ];
+	char sha1_part[ 32 ];
 	SHA1Context sha;
-	unsigned char sha1_hex[ 256 ];
-	unsigned char sha1_tmp[ 16 ];
-	unsigned char sec_websocket_accept[ 256 ];
+	unsigned char sha1_hex[ 512 ];
+	unsigned char sha1_tmp[ 512 ];
+	unsigned char sec_websocket_accept[ 512 ];
 	int source_len;
 	int i;
 
-	memset( sha1_hex, '\0', 256 );
-	memset( sha1_tmp, '\0', 16 );
-	memset( sec_websocket_accept, '\0', 256 );
+	memset( sha1_hex, '\0', 512 );
+	memset( sha1_tmp, '\0', 32 );
+	memset( sec_websocket_accept, '\0', 512 );
 
-	REQUEST_get_header_value( data, "Origin:", origin, 256 );
-	REQUEST_get_header_value( data, "Host:", host, 256 );
+	REQUEST_get_header_value( data, "Origin:", origin, 512 );
+	REQUEST_get_header_value( data, "Host:", host, 512 );
 
 	if( origin != NULL && host != NULL ) {
 		sprintf( additional_headers, "Origin: %s\r\nHost: %s", origin, host );
@@ -87,28 +92,29 @@ void WEBSOCKET_generate_handshake( const char *data, char *dst, const unsigned i
 		sprintf( additional_headers, "Origin: %s\r\nHost: %s", "null", "null" );
 	}
 
-	REQUEST_get_header_value(data, WEBSOCKET_KEY_HEADER, sec_websocket_key, 256 );
+	REQUEST_get_header_value(data, WEBSOCKET_KEY_HEADER, sec_websocket_key, 512 );
 	if( sec_websocket_key == NULL ) {
 		dst = NULL;
 		return;
 	}
 
-	strncat( sec_websocket_key, WEBSOCKET_MAGIC_STRING, 256 );
+	strncat( sec_websocket_key, WEBSOCKET_MAGIC_STRING, 512 );
 
 	SHA1Reset( &sha );
 	SHA1Input( &sha, ( const unsigned char * ) sec_websocket_key, strlen( sec_websocket_key ) );
 	SHA1Result( &sha );
 
 	for( i = 0; i < 5; i++ ) {
-		sprintf( sha1_part, "%x", sha.Message_Digest[i] );
-		strncat( sha1_tmp, sha1_part, 16 );
+		snprintf( sha1_part, 32, "%x", sha.Message_Digest[i] );
+		strncat( sha1_tmp, sha1_part, 512 );
 	}
 
-	strncpy( sec_websocket_key_sha1, sha1_tmp, 256 );
-	source_len = xstr2str( sha1_hex, 256, sec_websocket_key_sha1 );
-	base64_encode( sha1_hex, source_len - 1, sec_websocket_accept, 256 );
+	strncpy( sec_websocket_key_sha1, sha1_tmp, 512 );
+	source_len = xstr2str( sha1_hex, 512, sec_websocket_key_sha1 );
+	base64_encode( sha1_hex, source_len - 1, sec_websocket_accept, 512 );
 
-	sprintf( dst, WEBSOCKET_HANDSHAKE_RESPONSE, additional_headers, sec_websocket_accept );
+	snprintf( dst, dst_len, WEBSOCKET_HANDSHAKE_RESPONSE, additional_headers, sec_websocket_accept );
+
 }
 
 /*
