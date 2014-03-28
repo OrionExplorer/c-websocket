@@ -1,5 +1,5 @@
 c-websocket
-Copyright (C) 2012-2013
+Copyright (C) 2012-2014
 Marcin Kelar (marcin.kelar@gmail.com)
 ===========
 
