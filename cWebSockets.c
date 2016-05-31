@@ -221,7 +221,7 @@ int WEBSOCKET_get_content( const char *data, int data_length, unsigned char *dst
 
 	packet_length = data_length - index_first_data_byte;
 
-	for( i = index_first_data_byte, j = 0; i < data_length; i++, j++ ) {
+	for( i = index_first_data_byte, j = 0; i < data_length && j < dst_len; i++, j++ ) {
 		dst[ j ] = ( unsigned char )data[ i ] ^ mask[ j % 4];
 	}
 
